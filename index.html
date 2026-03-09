@@ -90,6 +90,8 @@
     </div>
 
     <script>
+        
+        //讓金額加總
         let total = 0;
 
         function addEntry() {
@@ -130,6 +132,73 @@
             total -= amount;
             document.getElementById('total-amount').innerText = total;
         }
+
+        //讓資料儲存在瀏覽器中
+        // 1. 初始化資料庫（嘗試從 localStorage 讀取，如果沒有就給空陣列）
+        let records = JSON.parse(localStorage.getItem('myExpenses')) || [];
+        let total = 0;
+
+        // 網頁一載入就執行渲染
+        renderTable();
+        
+        function addEntry() {
+            const descInput = document.getElementById('description');
+            const amountInput = document.getElementById('amount');
+        
+            if (descInput.value === '' || amountInput.value === '') {
+                alert("請輸入完整資訊喔！");
+                return;
+            }
+        
+            // 2. 建立新物件並加入陣列
+            const newRecord = {
+                id: Date.now(), // 用時間當作唯一 ID
+                description: descInput.value,
+                amount: parseFloat(amountInput.value)
+            };
+        
+            records.push(newRecord);
+            saveAndRender(); // 存檔並更新畫面
+        
+            // 清空輸入框
+            descInput.value = '';
+            amountInput.value = '';
+        }
+        
+        function deleteEntry(id) {
+            // 3. 根據 ID 過濾掉要刪除的項目
+            records = records.filter(record => record.id !== id);
+            saveAndRender();
+        }
+        
+        function saveAndRender() {
+            // 4. 將陣列轉為 JSON 字串存入 LocalStorage
+            localStorage.setItem('myExpenses', JSON.stringify(records));
+            renderTable();
+        }
+        
+        function renderTable() {
+            const list = document.getElementById('entry-list');
+            const totalDisplay = document.getElementById('total-amount');
+            
+            list.innerHTML = ''; // 先清空舊畫面
+            total = 0;
+        
+            // 5. 跑迴圈把每一筆資料畫出來
+            records.forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${record.description}</td>
+                    <td>${record.amount}</td>
+                    <td><button class="delete-btn" onclick="deleteEntry(${record.id})">刪除</button></td>
+                `;
+                list.appendChild(row);
+                total += record.amount;
+            });
+        
+            totalDisplay.innerText = total;
+        }
+        
     </script>
 
 </body>   
