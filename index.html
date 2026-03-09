@@ -90,57 +90,14 @@
     </div>
 
     <script>
-        
-        //讓金額加總
-        let total = 0;
-
-        function addEntry() {
-            const descInput = document.getElementById('description');
-            const amountInput = document.getElementById('amount');
-            const list = document.getElementById('entry-list');
-            const totalDisplay = document.getElementById('total-amount');
-        
-            if (descInput.value === '' || amountInput.value === '') {
-                alert("請輸入完整資訊喔！");
-                return;
-            }
-        
-            const val = parseFloat(amountInput.value);
-
-            // 建立新的表格列
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${descInput.value}</td>
-                <td>${val}</td>
-                <td><button class="delete-btn" onclick="deleteEntry(this, ${val})">刪除</button></td>
-            `;
-        
-            list.appendChild(row);
-        
-            // 更新總金額
-            total += val;
-            totalDisplay.innerText = total;
-        
-            // 清空輸入框
-            descInput.value = '';
-            amountInput.value = '';
-        }
-        
-        function deleteEntry(btn, amount) {
-            const row = btn.parentNode.parentNode;
-            row.remove();
-            total -= amount;
-            document.getElementById('total-amount').innerText = total;
-        }
-
-        //讓資料儲存在瀏覽器中
-        // 1. 初始化資料庫（嘗試從 localStorage 讀取，如果沒有就給空陣列）
+        // 1. 初始化資料 (只宣告一次)
         let records = JSON.parse(localStorage.getItem('myExpenses')) || [];
         let total = 0;
 
-        // 網頁一載入就執行渲染
+        // 網頁一載入，就先把存好的資料畫出來
         renderTable();
         
+        // 新增項目的函式
         function addEntry() {
             const descInput = document.getElementById('description');
             const amountInput = document.getElementById('amount');
@@ -150,41 +107,43 @@
                 return;
             }
         
-            // 2. 建立新物件並加入陣列
+            // 2. 建立新紀錄物件
             const newRecord = {
-                id: Date.now(), // 用時間當作唯一 ID
+                id: Date.now(), // 用時間當作唯一身分證
                 description: descInput.value,
                 amount: parseFloat(amountInput.value)
             };
         
+            // 3. 加入陣列並儲存
             records.push(newRecord);
-            saveAndRender(); // 存檔並更新畫面
+            saveAndRender(); 
         
-            // 清空輸入框
+            // 4. 清空輸入框
             descInput.value = '';
             amountInput.value = '';
         }
         
+        // 刪除項目的函式
         function deleteEntry(id) {
-            // 3. 根據 ID 過濾掉要刪除的項目
+            // 過濾掉符合該 ID 的項目
             records = records.filter(record => record.id !== id);
             saveAndRender();
         }
         
+        // 儲存到 LocalStorage 並重新繪製畫面
         function saveAndRender() {
-            // 4. 將陣列轉為 JSON 字串存入 LocalStorage
             localStorage.setItem('myExpenses', JSON.stringify(records));
             renderTable();
         }
         
+        // 繪製表格的函式
         function renderTable() {
             const list = document.getElementById('entry-list');
             const totalDisplay = document.getElementById('total-amount');
             
-            list.innerHTML = ''; // 先清空舊畫面
-            total = 0;
+            list.innerHTML = ''; // 清空目前的 HTML 表格內容
+            total = 0; // 重算總金額
         
-            // 5. 跑迴圈把每一筆資料畫出來
             records.forEach(record => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -198,8 +157,6 @@
         
             totalDisplay.innerText = total;
         }
-        
     </script>
-
 </body>   
 </html>
