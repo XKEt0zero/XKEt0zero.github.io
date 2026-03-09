@@ -37,6 +37,7 @@
         </tr>
         </table>
         </div>
+        
         <div class="container">
             <h2>我的記帳本</h2>
             
@@ -62,6 +63,45 @@
                 總計：$<span id="total-amount">0</span>
             </div>
         </div>
+
+        let total = 0;
+
+function addEntry() {
+    const descInput = document.getElementById('description');
+    const amountInput = document.getElementById('amount');
+    const list = document.getElementById('entry-list');
+    const totalDisplay = document.getElementById('total-amount');
+
+    if (descInput.value === '' || amountInput.value === '') {
+        alert("請輸入完整資訊喔！");
+        return;
+    }
+
+    // 建立新的表格列
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${descInput.value}</td>
+        <td>${amountInput.value}</td>
+        <td><button class="delete-btn" onclick="deleteEntry(this, ${amountInput.value})">刪除</button></td>
+    `;
+
+    list.appendChild(row);
+
+    // 更新總金額
+    total += parseFloat(amountInput.value);
+    totalDisplay.innerText = total;
+
+    // 清空輸入框
+    descInput.value = '';
+    amountInput.value = '';
+}
+
+function deleteEntry(btn, amount) {
+    const row = btn.parentNode.parentNode;
+    row.remove();
+    total -= amount;
+    document.getElementById('total-amount').innerText = total;
+}
 
     </body>   
 </html> 
