@@ -1,5 +1,29 @@
 <!DOCTYPE html>
 <html lang="zh-Hant-TW"> 
+    <body>
+    <div id="auth-section" class="container">
+        <h2>歡迎使用網頁記帳</h2>
+        <input type="email" id="email" placeholder="電子郵件">
+        <input type="password" id="password" placeholder="密碼">
+        <br>
+        <button id="login-btn">登入</button>
+        <button id="register-btn" style="background:gray;">註冊</button>
+    </div>
+
+    <div id="app-section" class="container" style="display:none;">
+        <h3>你好，<span id="user-display"></span></h3>
+        <button id="logout-btn">登出</button>
+        <hr>
+        <div class="input-group">
+            <input type="date" id="add-date">
+            <input type="text" id="description" placeholder="項目">
+            <input type="number" id="amount" placeholder="金額">
+            <button id="add-btn">新增紀錄</button>
+        </div>
+        <button id="query-btn">查詢今日帳目</button>
+        <table id="list-table">...</table>
+    </div>
+</body>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
@@ -66,100 +90,103 @@
     <script>
         // 設定今天日期為預設值
         document.getElementById('add-date').valueAsDate = new Date();
-
-        // 初始化資料 (從 localStorage 讀取)
-        let records = JSON.parse(localStorage.getItem('myExpenses')) || [];
-
-        // 注意：這裡我們不再網頁載入時執行 renderTable()，
-        // 這樣初始頁面就會是空的，符合你的需求。
-
-        // 【新增功能】
-        function addEntry() {
-            const dateInput = document.getElementById('add-date');
-            const descInput = document.getElementById('description');
-            const amountInput = document.getElementById('amount');
-        
-            if (!dateInput.value || !descInput.value || !amountInput.value) {
-                alert("請填寫完整資訊！");
-                return;
-            }
-        
-            const newRecord = {
-                id: Date.now(),
-                date: dateInput.value,
-                description: descInput.value,
-                amount: parseFloat(amountInput.value)
-            };
-        
-            records.push(newRecord);
-            localStorage.setItem('myExpenses', JSON.stringify(records));
-            
-            alert("已成功新增一筆紀錄！");
-            
-            // 清空輸入
-            descInput.value = '';
-            amountInput.value = '';
-        }
-        
-        // 【查詢篩選功能】
-        function filterRecords() {
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-
-            if (!startDate || !endDate) {
-                alert("請選擇開始與結束日期！");
-                return;
-            }
-
-            // 篩選出在區間內的資料
-            const filtered = records.filter(record => {
-                return record.date >= startDate && record.date <= endDate;
-            });
-
-            // 排序（由新到舊）
-            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            // 渲染篩選後的資料
-            renderTable(filtered);
-        }
-
-        // 【刪除功能】
-        function deleteEntry(id) {
-            if(!confirm("確定要刪除嗎？")) return;
-            
-            records = records.filter(record => record.id !== id);
-            localStorage.setItem('myExpenses', JSON.stringify(records));
-            
-            // 刪除後自動重新跑一次篩選，更新畫面
-            filterRecords();
-        }
-        
-        // 【繪製表格功能】
-        function renderTable(dataToShow) {
-            const list = document.getElementById('entry-list');
-            const totalDisplay = document.getElementById('total-amount');
-            
-            list.innerHTML = ''; 
-            let total = 0;
-        
-            dataToShow.forEach(record => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${record.date}</td>
-                    <td>${record.description}</td>
-                    <td>${record.amount}</td>
-                    <td><button class="delete-btn" onclick="deleteEntry(${record.id})">刪除</button></td>
-                `;
-                list.appendChild(row);
-                total += record.amount;
-            });
-        
-            totalDisplay.innerText = total;
             
             if (dataToShow.length === 0) {
                 list.innerHTML = '<tr><td colspan="4">此區間無任何紀錄</td></tr>';
             }
         }
     </script>
+    <script type="module">
+  // 1. 引入需要的功能
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
+  // 2. 貼上 Config 
+        <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyDq5lD0gBIhmCFhwky5SYmj5TXjqTGOU8k",
+    authDomain: "myexpenseapp-ebed1.firebaseapp.com",
+    projectId: "myexpenseapp-ebed1",
+    storageBucket: "myexpenseapp-ebed1.firebasestorage.app",
+    messagingSenderId: "884173446383",
+    appId: "1:884173446383:web:70f00c33f185fa80b24f1a",
+    measurementId: "G-FM73YKQKQR"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDq5lD0gBIhmCFhwky5SYmj5TXjqTGOU8k",
+    authDomain: "myexpenseapp-ebed1.firebaseapp.com",
+    projectId: "myexpenseapp-ebed1",
+    storageBucket: "myexpenseapp-ebed1.firebasestorage.app",
+    messagingSenderId: "884173446383",
+    appId: "1:884173446383:web:70f00c33f185fa80b24f1a"
+  };
+
+  // 初始化 Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // --- 登入狀態監控 ---
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById('auth-section').style.display = 'none';
+      document.getElementById('app-section').style.display = 'block';
+      document.getElementById('user-display').innerText = user.email;
+      // 登入後自動加載資料邏輯...
+    } else {
+      document.getElementById('auth-section').style.display = 'block';
+      document.getElementById('app-section').style.display = 'none';
+    }
+  });
+
+  // --- 註冊功能 ---
+  document.getElementById('register-btn').addEventListener('click', async () => {
+    const email = document.getElementById('email').value;
+    const pw = document.getElementById('password').value;
+    try {
+      await createUserWithEmailAndPassword(auth, email, pw);
+      alert("註冊成功！");
+    } catch (e) { alert("註冊失敗: " + e.message); }
+  });
+
+  // --- 登入功能 ---
+  document.getElementById('login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('email').value;
+    const pw = document.getElementById('password').value;
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch (e) { alert("登入失敗: " + e.message); }
+  });
+
+  // --- 存資料到雲端 (新增項目) ---
+  document.getElementById('add-btn').addEventListener('click', async () => {
+    const user = auth.currentUser;
+    const data = {
+        uid: user.uid, // 每個帳號的唯一識別碼
+        date: document.getElementById('add-date').value,
+        description: document.getElementById('description').value,
+        amount: Number(document.getElementById('amount').value)
+    };
+    await addDoc(collection(db, "user_expenses"), data);
+    alert("雲端儲存成功！");
+  });
+
+  // --- 登出 ---
+  document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+</script>
 </body>   
 </html>
