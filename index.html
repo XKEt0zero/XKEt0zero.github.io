@@ -3,78 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>網頁記帳</title> 
+    <title>進階網頁記帳</title> 
     <style>
-        body {
-            background-color: #d2e2e7;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: center;
-        }
-        th {
-            background-color: #f8f9fa;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        input {
-            padding: 8px;
-            margin: 5px;
-        }
-        .total-section {
-            margin-top: 20px;
-            font-weight: bold;
-            font-size: 1.2em;
-            color: #2c3e50;
-        }
-        .delete-btn {
-            background-color: #ff4d4d;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            border-radius: 3px;
-        }
+        body { background-color: #d2e2e7; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background-color: #f8f9fa; }
+        .section { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        .input-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 15px; cursor: pointer; border-radius: 4px; border: none; background-color: #5cb85c; color: white; }
+        button:hover { background-color: #4cae4c; }
+        .query-btn { background-color: #0275d8; }
+        .query-btn:hover { background-color: #025aa5; }
+        .total-section { margin-top: 20px; font-weight: bold; font-size: 1.2em; color: #2c3e50; }
+        .delete-btn { background-color: #ff4d4d; color: white; }
     </style>
 </head> 
 <body> 
 
-    <h1>網頁記帳</h1>
-    <p>在這個網站可以非常方便的記帳</p>
+    <h1>網頁記帳系統</h1>
     
     <div class="container">
-        <h2>我的記帳本</h2>
-        
-        <div class="input-group">
-            <input type="text" id="description" placeholder="消費項目（如：午餐）">
-            <input type="number" id="amount" placeholder="金額">
-            <button onclick="addEntry()">新增</button>
+        <div class="section">
+            <h3>1. 新增支出</h3>
+            <div class="input-group">
+                <input type="date" id="add-date">
+                <input type="text" id="description" placeholder="項目">
+                <input type="number" id="amount" placeholder="金額">
+                <button onclick="addEntry()">新增</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>2. 查詢區間花費</h3>
+            <div class="input-group">
+                從 <input type="date" id="start-date">
+                至 <input type="date" id="end-date">
+                <button class="query-btn" onclick="filterRecords()">查詢</button>
+            </div>
         </div>
     
         <table id="list-table">
             <thead>
                 <tr>
+                    <th>日期</th>
                     <th>項目</th>
                     <th>金額</th>
                     <th>操作</th>
@@ -85,68 +59,93 @@
         </table>
     
         <div class="total-section">
-            總計：$<span id="total-amount">0</span>
+            該區間總計：$<span id="total-amount">0</span>
         </div>
     </div>
 
     <script>
-        // 1. 初始化資料 (只宣告一次)
-        let records = JSON.parse(localStorage.getItem('myExpenses')) || [];
-        let total = 0;
+        // 設定今天日期為預設值
+        document.getElementById('add-date').valueAsDate = new Date();
 
-        // 網頁一載入，就先把存好的資料畫出來
-        renderTable();
-        
-        // 新增項目的函式
+        // 初始化資料 (從 localStorage 讀取)
+        let records = JSON.parse(localStorage.getItem('myExpenses')) || [];
+
+        // 注意：這裡我們不再網頁載入時執行 renderTable()，
+        // 這樣初始頁面就會是空的，符合你的需求。
+
+        // 【新增功能】
         function addEntry() {
+            const dateInput = document.getElementById('add-date');
             const descInput = document.getElementById('description');
             const amountInput = document.getElementById('amount');
         
-            if (descInput.value === '' || amountInput.value === '') {
-                alert("請輸入完整資訊喔！");
+            if (!dateInput.value || !descInput.value || !amountInput.value) {
+                alert("請填寫完整資訊！");
                 return;
             }
         
-            // 2. 建立新紀錄物件
             const newRecord = {
-                id: Date.now(), // 用時間當作唯一身分證
+                id: Date.now(),
+                date: dateInput.value,
                 description: descInput.value,
                 amount: parseFloat(amountInput.value)
             };
         
-            // 3. 加入陣列並儲存
             records.push(newRecord);
-            saveAndRender(); 
-        
-            // 4. 清空輸入框
+            localStorage.setItem('myExpenses', JSON.stringify(records));
+            
+            alert("已成功新增一筆紀錄！");
+            
+            // 清空輸入
             descInput.value = '';
             amountInput.value = '';
         }
         
-        // 刪除項目的函式
+        // 【查詢篩選功能】
+        function filterRecords() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            if (!startDate || !endDate) {
+                alert("請選擇開始與結束日期！");
+                return;
+            }
+
+            // 篩選出在區間內的資料
+            const filtered = records.filter(record => {
+                return record.date >= startDate && record.date <= endDate;
+            });
+
+            // 排序（由新到舊）
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // 渲染篩選後的資料
+            renderTable(filtered);
+        }
+
+        // 【刪除功能】
         function deleteEntry(id) {
-            // 過濾掉符合該 ID 的項目
+            if(!confirm("確定要刪除嗎？")) return;
+            
             records = records.filter(record => record.id !== id);
-            saveAndRender();
-        }
-        
-        // 儲存到 LocalStorage 並重新繪製畫面
-        function saveAndRender() {
             localStorage.setItem('myExpenses', JSON.stringify(records));
-            renderTable();
+            
+            // 刪除後自動重新跑一次篩選，更新畫面
+            filterRecords();
         }
         
-        // 繪製表格的函式
-        function renderTable() {
+        // 【繪製表格功能】
+        function renderTable(dataToShow) {
             const list = document.getElementById('entry-list');
             const totalDisplay = document.getElementById('total-amount');
             
-            list.innerHTML = ''; // 清空目前的 HTML 表格內容
-            total = 0; // 重算總金額
+            list.innerHTML = ''; 
+            let total = 0;
         
-            records.forEach(record => {
+            dataToShow.forEach(record => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
+                    <td>${record.date}</td>
                     <td>${record.description}</td>
                     <td>${record.amount}</td>
                     <td><button class="delete-btn" onclick="deleteEntry(${record.id})">刪除</button></td>
@@ -156,6 +155,10 @@
             });
         
             totalDisplay.innerText = total;
+            
+            if (dataToShow.length === 0) {
+                list.innerHTML = '<tr><td colspan="4">此區間無任何紀錄</td></tr>';
+            }
         }
     </script>
 </body>   
