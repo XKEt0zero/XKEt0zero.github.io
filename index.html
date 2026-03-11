@@ -1,62 +1,52 @@
 <!DOCTYPE html>
-<html lang="zh-Hant-TW"> 
-    <body>
-    <div id="auth-section" class="container">
-        <h2>歡迎使用網頁記帳</h2>
-        <input type="email" id="email" placeholder="電子郵件">
-        <input type="password" id="password" placeholder="密碼">
-        <br>
-        <button id="login-btn">登入</button>
-        <button id="register-btn" style="background:gray;">註冊</button>
-    </div>
-
-    <div id="app-section" class="container" style="display:none;">
-        <h3>你好，<span id="user-display"></span></h3>
-        <button id="logout-btn">登出</button>
-        <hr>
-        <div class="input-group">
-            <input type="date" id="add-date">
-            <input type="text" id="description" placeholder="項目">
-            <input type="number" id="amount" placeholder="金額">
-            <button id="add-btn">新增紀錄</button>
-        </div>
-        <button id="query-btn">查詢今日帳目</button>
-        <table id="list-table">...</table>
-    </div>
-</body>
+<html lang="zh-Hant-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>進階網頁記帳</title> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雲端網頁記帳系統</title>
     <style>
         body { background-color: #d2e2e7; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; }
+        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 600px; text-align: center; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
         th { background-color: #f8f9fa; }
         .section { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
-        .input-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        .input-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 10px 0; }
         input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 8px 15px; cursor: pointer; border-radius: 4px; border: none; background-color: #5cb85c; color: white; }
-        button:hover { background-color: #4cae4c; }
+        button { padding: 8px 15px; cursor: pointer; border-radius: 4px; border: none; background-color: #5cb85c; color: white; transition: 0.3s; }
+        button:hover { opacity: 0.8; }
         .query-btn { background-color: #0275d8; }
-        .query-btn:hover { background-color: #025aa5; }
-        .total-section { margin-top: 20px; font-weight: bold; font-size: 1.2em; color: #2c3e50; }
-        .delete-btn { background-color: #ff4d4d; color: white; }
+        .logout-btn { background-color: #666; float: right; margin-top: -40px; }
+        .total-section { margin-top: 20px; font-weight: bold; font-size: 1.2em; color: #2c3e50; text-align: right; }
+        .delete-btn { background-color: #ff4d4d; color: white; padding: 5px 10px; }
     </style>
-</head> 
-<body> 
+</head>
+<body>
 
-    <h1>網頁記帳系統</h1>
-    
-    <div class="container">
+    <h1>雲端記帳系統</h1>
+
+    <div id="auth-section" class="container">
+        <h2>歡迎使用網頁記帳</h2>
+        <div class="input-group">
+            <input type="email" id="email" placeholder="電子郵件">
+            <input type="password" id="password" placeholder="密碼">
+        </div>
+        <button id="login-btn" class="query-btn">登入</button>
+        <button id="register-btn" style="background:gray;">註冊</button>
+    </div>
+
+    <div id="app-section" class="container" style="display:none;">
+        <button id="logout-btn" class="logout-btn">登出</button>
+        <h3 style="text-align: left;">你好，<span id="user-display" style="color: #0275d8;"></span></h3>
+        <hr>
+        
         <div class="section">
             <h3>1. 新增支出</h3>
             <div class="input-group">
                 <input type="date" id="add-date">
-                <input type="text" id="description" placeholder="項目">
+                <input type="text" id="description" placeholder="項目內容">
                 <input type="number" id="amount" placeholder="金額">
-                <button onclick="addEntry()">新增</button>
+                <button id="add-btn">新增紀錄到雲端</button>
             </div>
         </div>
 
@@ -65,10 +55,10 @@
             <div class="input-group">
                 從 <input type="date" id="start-date">
                 至 <input type="date" id="end-date">
-                <button class="query-btn" onclick="filterRecords()">查詢</button>
+                <button id="query-btn" class="query-btn">查詢</button>
             </div>
         </div>
-    
+
         <table id="list-table">
             <thead>
                 <tr>
@@ -79,114 +69,139 @@
                 </tr>
             </thead>
             <tbody id="entry-list">
-                </tbody>
+                <tr><td colspan="4">請選擇日期區間進行查詢</td></tr>
+            </tbody>
         </table>
-    
+
         <div class="total-section">
             該區間總計：$<span id="total-amount">0</span>
         </div>
     </div>
 
-    <script>
-        // 設定今天日期為預設值
-        document.getElementById('add-date').valueAsDate = new Date();
-            
-            if (dataToShow.length === 0) {
-                list.innerHTML = '<tr><td colspan="4">此區間無任何紀錄</td></tr>';
-            }
-        }
-    </script>
     <script type="module">
-  // 1. 引入需要的功能
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-  // 2. 貼上 Config 
-        <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+        // 你的 Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDq5lD0gBIhmCFhwky5SYmj5TXjqTGOU8k",
+            authDomain: "myexpenseapp-ebed1.firebaseapp.com",
+            projectId: "myexpenseapp-ebed1",
+            storageBucket: "myexpenseapp-ebed1.firebasestorage.app",
+            messagingSenderId: "884173446383",
+            appId: "1:884173446383:web:70f00c33f185fa80b24f1a"
+        };
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyDq5lD0gBIhmCFhwky5SYmj5TXjqTGOU8k",
-    authDomain: "myexpenseapp-ebed1.firebaseapp.com",
-    projectId: "myexpenseapp-ebed1",
-    storageBucket: "myexpenseapp-ebed1.firebasestorage.app",
-    messagingSenderId: "884173446383",
-    appId: "1:884173446383:web:70f00c33f185fa80b24f1a",
-    measurementId: "G-FM73YKQKQR"
-  };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDq5lD0gBIhmCFhwky5SYmj5TXjqTGOU8k",
-    authDomain: "myexpenseapp-ebed1.firebaseapp.com",
-    projectId: "myexpenseapp-ebed1",
-    storageBucket: "myexpenseapp-ebed1.firebasestorage.app",
-    messagingSenderId: "884173446383",
-    appId: "1:884173446383:web:70f00c33f185fa80b24f1a"
-  };
+        // 設定今日日期
+        document.getElementById('add-date').valueAsDate = new Date();
 
-  // 初始化 Firebase
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+        // --- 狀態監控 ---
+        onAuthStateChanged(auth, (user) => {
+            const authSec = document.getElementById('auth-section');
+            const appSec = document.getElementById('app-section');
+            if (user) {
+                authSec.style.display = 'none';
+                appSec.style.display = 'block';
+                document.getElementById('user-display').innerText = user.email;
+            } else {
+                authSec.style.display = 'block';
+                appSec.style.display = 'none';
+            }
+        });
 
-  // --- 登入狀態監控 ---
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      document.getElementById('auth-section').style.display = 'none';
-      document.getElementById('app-section').style.display = 'block';
-      document.getElementById('user-display').innerText = user.email;
-      // 登入後自動加載資料邏輯...
-    } else {
-      document.getElementById('auth-section').style.display = 'block';
-      document.getElementById('app-section').style.display = 'none';
-    }
-  });
+        // --- 註冊與登入 ---
+        document.getElementById('register-btn').onclick = async () => {
+            const email = document.getElementById('email').value;
+            const pw = document.getElementById('password').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, pw);
+                alert("註冊成功！");
+            } catch (e) { alert("註冊失敗: " + e.message); }
+        };
 
-  // --- 註冊功能 ---
-  document.getElementById('register-btn').addEventListener('click', async () => {
-    const email = document.getElementById('email').value;
-    const pw = document.getElementById('password').value;
-    try {
-      await createUserWithEmailAndPassword(auth, email, pw);
-      alert("註冊成功！");
-    } catch (e) { alert("註冊失敗: " + e.message); }
-  });
+        document.getElementById('login-btn').onclick = async () => {
+            const email = document.getElementById('email').value;
+            const pw = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pw);
+            } catch (e) { alert("登入失敗: " + e.message); }
+        };
 
-  // --- 登入功能 ---
-  document.getElementById('login-btn').addEventListener('click', async () => {
-    const email = document.getElementById('email').value;
-    const pw = document.getElementById('password').value;
-    try {
-      await signInWithEmailAndPassword(auth, email, pw);
-    } catch (e) { alert("登入失敗: " + e.message); }
-  });
+        document.getElementById('logout-btn').onclick = () => signOut(auth);
 
-  // --- 存資料到雲端 (新增項目) ---
-  document.getElementById('add-btn').addEventListener('click', async () => {
-    const user = auth.currentUser;
-    const data = {
-        uid: user.uid, // 每個帳號的唯一識別碼
-        date: document.getElementById('add-date').value,
-        description: document.getElementById('description').value,
-        amount: Number(document.getElementById('amount').value)
-    };
-    await addDoc(collection(db, "user_expenses"), data);
-    alert("雲端儲存成功！");
-  });
+        // --- 新增資料 ---
+        document.getElementById('add-btn').onclick = async () => {
+            const date = document.getElementById('add-date').value;
+            const desc = document.getElementById('description').value;
+            const amt = document.getElementById('amount').value;
+            
+            if(!date || !desc || !amt) return alert("請填寫完整資訊");
 
-  // --- 登出 ---
-  document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-</script>
-</body>   
+            try {
+                await addDoc(collection(db, "user_expenses"), {
+                    uid: auth.currentUser.uid,
+                    date: date,
+                    description: desc,
+                    amount: Number(amt)
+                });
+                alert("儲存成功！");
+                document.getElementById('description').value = '';
+                document.getElementById('amount').value = '';
+            } catch (e) { alert("儲存錯誤: " + e.message); }
+        };
+
+        // --- 查詢功能 ---
+        document.getElementById('query-btn').onclick = async () => {
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+
+            if(!start || !end) return alert("請選擇日期區間");
+
+            const q = query(
+                collection(db, "user_expenses"),
+                where("uid", "==", auth.currentUser.uid),
+                where("date", ">=", start),
+                where("date", "<=", end)
+            );
+
+            const querySnapshot = await getDocs(q);
+            const list = document.getElementById('entry-list');
+            const totalDisplay = document.getElementById('total-amount');
+            
+            list.innerHTML = '';
+            let total = 0;
+
+            querySnapshot.forEach((res) => {
+                const item = res.data();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.date}</td>
+                    <td>${item.description}</td>
+                    <td>${item.amount}</td>
+                    <td><button class="delete-btn" data-id="${res.id}">刪除</button></td>
+                `;
+                list.appendChild(row);
+                total += item.amount;
+            });
+
+            totalDisplay.innerText = total;
+            if(total === 0) list.innerHTML = '<tr><td colspan="4">查無資料</td></tr>';
+
+            // 綁定刪除事件
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const docId = e.target.getAttribute('data-id');
+                    await deleteDoc(doc(db, "user_expenses", docId));
+                    e.target.closest('tr').remove();
+                    alert("已刪除紀錄");
+                };
+            });
+        };
+    </script>
+</body>
 </html>
