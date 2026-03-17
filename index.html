@@ -131,6 +131,18 @@ async function autoFetchRecords(uid) {
     renderTable(querySnapshot); // 呼叫統一的渲染函式
 }
 
+// 【新增：自動抓取的函式】
+async function autoFetchRecords(uid) {
+    // 這裡我們預設撈出該使用者的所有紀錄 (或是你可以自訂邏輯)
+    const q = query(
+        collection(db, "user_expenses"),
+        where("uid", "==", uid)
+    );
+
+    const querySnapshot = await getDocs(q);
+    renderTable(querySnapshot); // 呼叫統一的渲染函式
+}
+
         // --- 註冊與登入 ---
         document.getElementById('register-btn').onclick = async () => {
             const email = document.getElementById('email').value;
