@@ -83,7 +83,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-        // 你的 Config
         const firebaseConfig = {
             apiKey: "AIzaSyDq5lD0gBIhmCFhwky5SYmj5TXjqTGOU8k",
             authDomain: "myexpenseapp-ebed1.firebaseapp.com",
@@ -97,53 +96,71 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 設定今日日期
         document.getElementById('add-date').valueAsDate = new Date();
 
         // --- 狀態監控 ---
-onAuthStateChanged(auth, (user) => {
-    const authSec = document.getElementById('auth-section');
-    const appSec = document.getElementById('app-section');
-    if (user) {
-        authSec.style.display = 'none';
-        appSec.style.display = 'block';
-        document.getElementById('user-display').innerText = user.email;
+        onAuthStateChanged(auth, (user) => {
+            const authSec = document.getElementById('auth-section');
+            const appSec = document.getElementById('app-section');
+            if (user) {
+                authSec.style.display = 'none';
+                appSec.style.display = 'block';
+                document.getElementById('user-display').innerText = user.email;
+                autoFetchRecords(user.uid); // 登入或 F5 後自動載入
+            } else {
+                authSec.style.display = 'block';
+                appSec.style.display = 'none';
+            }
+        });
 
-        // 【新增：自動載入資料】
-        // 當使用者登入成功，直接幫他抓取「最近 30 筆」或「全部紀錄」
-        autoFetchRecords(user.uid); 
-        
-    } else {
-        authSec.style.display = 'block';
-        appSec.style.display = 'none';
-    }
-});
+        // 【核心：統一渲染函式】
+        function renderData(querySnapshot) {
+            const list = document.getElementById('entry-list');
+            const totalDisplay = document.getElementById('total-amount');
+            list.innerHTML = '';
+            let total = 0;
 
-// 【新增：自動抓取的函式】
-async function autoFetchRecords(uid) {
-    // 這裡我們預設撈出該使用者的所有紀錄 (或是你可以自訂邏輯)
-    const q = query(
-        collection(db, "user_expenses"),
-        where("uid", "==", uid)
-    );
+            querySnapshot.forEach((res) => {
+                const item = res.data();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.date}</td>
+                    <td>${item.description}</td>
+                    <td>${item.amount}</td>
+                    <td><button class="delete-btn" data-id="${res.id}">刪除</button></td>
+                `;
+                list.appendChild(row);
+                total += item.amount;
+            });
 
-    const querySnapshot = await getDocs(q);
-    renderTable(querySnapshot); // 呼叫統一的渲染函式
-}
+            totalDisplay.innerText = total;
+            if(total === 0) list.innerHTML = '<tr><td colspan="4">目前尚無資料</td></tr>';
 
-// 【新增：自動抓取的函式】
-async function autoFetchRecords(uid) {
-    // 這裡我們預設撈出該使用者的所有紀錄 (或是你可以自訂邏輯)
-    const q = query(
-        collection(db, "user_expenses"),
-        where("uid", "==", uid)
-    );
+            // 重新綁定刪除事件
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const docId = e.target.getAttribute('data-id');
+                    if(confirm("確定要刪除這筆紀錄嗎？")) {
+                        await deleteDoc(doc(db, "user_expenses", docId));
+                        alert("已刪除紀錄");
+                        autoFetchRecords(auth.currentUser.uid); // 刪除後自動重刷
+                    }
+                };
+            });
+        }
 
-    const querySnapshot = await getDocs(q);
-    renderTable(querySnapshot); // 呼叫統一的渲染函式
-}
+        // 【自動抓取】
+        async function autoFetchRecords(uid) {
+            const q = query(
+                collection(db, "user_expenses"),
+                where("uid", "==", uid),
+                orderBy("date", "desc") // 讓日期新的排在前面
+            );
+            const querySnapshot = await getDocs(q);
+            renderData(querySnapshot);
+        }
 
-        // --- 註冊與登入 ---
+        // --- 註冊、登入、登出 ---
         document.getElementById('register-btn').onclick = async () => {
             const email = document.getElementById('email').value;
             const pw = document.getElementById('password').value;
@@ -168,7 +185,6 @@ async function autoFetchRecords(uid) {
             const date = document.getElementById('add-date').value;
             const desc = document.getElementById('description').value;
             const amt = document.getElementById('amount').value;
-            
             if(!date || !desc || !amt) return alert("請填寫完整資訊");
 
             try {
@@ -181,6 +197,7 @@ async function autoFetchRecords(uid) {
                 alert("儲存成功！");
                 document.getElementById('description').value = '';
                 document.getElementById('amount').value = '';
+                autoFetchRecords(auth.currentUser.uid); // 新增後自動重刷
             } catch (e) { alert("儲存錯誤: " + e.message); }
         };
 
@@ -188,7 +205,6 @@ async function autoFetchRecords(uid) {
         document.getElementById('query-btn').onclick = async () => {
             const start = document.getElementById('start-date').value;
             const end = document.getElementById('end-date').value;
-
             if(!start || !end) return alert("請選擇日期區間");
 
             const q = query(
@@ -197,39 +213,8 @@ async function autoFetchRecords(uid) {
                 where("date", ">=", start),
                 where("date", "<=", end)
             );
-
             const querySnapshot = await getDocs(q);
-            const list = document.getElementById('entry-list');
-            const totalDisplay = document.getElementById('total-amount');
-            
-            list.innerHTML = '';
-            let total = 0;
-
-            querySnapshot.forEach((res) => {
-                const item = res.data();
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${item.date}</td>
-                    <td>${item.description}</td>
-                    <td>${item.amount}</td>
-                    <td><button class="delete-btn" data-id="${res.id}">刪除</button></td>
-                `;
-                list.appendChild(row);
-                total += item.amount;
-            });
-
-            totalDisplay.innerText = total;
-            if(total === 0) list.innerHTML = '<tr><td colspan="4">查無資料</td></tr>';
-
-            // 綁定刪除事件
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.onclick = async (e) => {
-                    const docId = e.target.getAttribute('data-id');
-                    await deleteDoc(doc(db, "user_expenses", docId));
-                    e.target.closest('tr').remove();
-                    alert("已刪除紀錄");
-                };
-            });
+            renderData(querySnapshot);
         };
     </script>
 </body>
